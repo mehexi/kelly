@@ -58,7 +58,19 @@
   // ── Main action button ────────────────────────────────────────────
   actionBtn.addEventListener("click", () => {
     if (mode === "onetime") {
-      window.location.href = `/checkout/buy/${variantId}`;
+      fetch('/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: variantId,
+          quantity: 1
+        })
+      })
+        .then(() => {
+          window.location.href = '/checkout';
+        });
     } else {
       showForm();
     }
@@ -95,6 +107,7 @@
         `${appUrl}/api/plans?shop=${shop}&productId=${productId}`
       );
       const data = await res.json();
+      console.log(data)
 
       loadingEl.style.display = "none";
       optionsEl.style.display = "block";
@@ -108,6 +121,7 @@
 
       selectedPlan = data.plans[0];
       subscribeRow.querySelector(".sw-plan-name").textContent = selectedPlan.name;
+      subscribeRow.querySelector(".sw-des").textContent = selectedPlan.description;
       subscribeRow.querySelector(".sw-plan-price").textContent =
         `from ${selectedPlan.currency} ${(selectedPlan.amount / 100).toLocaleString()} / ${selectedPlan.interval}`;
 
@@ -123,6 +137,7 @@
     selectedPlanEl.innerHTML = `
       <div class="sw-summary">
         <span class="sw-summary-name">${selectedPlan.name}</span>
+        <p>${selectedPlan.description}</p>
         <span class="sw-summary-price">
           ${selectedPlan.currency} ${(selectedPlan.amount / 100).toLocaleString()} / ${selectedPlan.interval}
         </span>
