@@ -45,7 +45,7 @@ model Plan {
   shop             String
   name             String
   description      String?
-  discountPercent  Int          @default(10)  // renamed from amount, 1-99
+  amount           Int
   currency         String       @default("NGN")
   interval         String
   paystackPlanCode String?      @unique
