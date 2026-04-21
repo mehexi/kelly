@@ -118,12 +118,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  if (intent === "delete-plan") {
+    const planId = formData.get("planId") as string;
+
+    if (!planId) {
+      return Response.json({ error: "Plan ID required" }, { status: 400 });
+    }
+
+    try {
+      await prisma.plan.delete({
+        where: { id: planId },
+      });
+
+      return Response.json({ success: true });
+    } catch (error) {
+      return Response.json(
+        { error: "Failed to delete plan" },
+        { status: 500 }
+      );
+    }
+  }
+
   return Response.json({ error: "Invalid intent." }, { status: 400 });
 };
 
 export default function Index() {
   const { total, active, pending, plans } = useLoaderData();
   const [planOpen, setPlanOpen] = useState(false);
+  const fetcher = useFetcher();
 
   return (
     <s-page heading="Dashboard">
@@ -196,6 +218,23 @@ export default function Index() {
                   </s-table-cell>
                   <s-table-cell>
                     {new Date(plan.createdAt).toLocaleDateString()}
+                  </s-table-cell>
+                  <s-table-cell>
+                    <fetcher.Form method="post">
+                      <input type="hidden" name="intent" value="delete-plan" />
+                      <input type="hidden" name="planId" value={plan.id} />
+
+                      <s-button
+                        variant="secondary"
+                        tone="critical"
+                        type="submit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                        }}
+                      >
+                        Delete
+                      </s-button>
+                    </fetcher.Form>
                   </s-table-cell>
                 </s-table-row>
               ))}
