@@ -28,14 +28,14 @@ model Session {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  shop        String
-  shopifyId   String   // Shopify product GID e.g. "gid://shopify/Product/123"
-  title       String
-  handle      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  plan        Plan?    // one product -> one plan
+  id        String   @id @default(cuid())
+  shop      String
+  shopifyId String
+  title     String
+  handle    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plans     Plan[]
 
   @@unique([shop, shopifyId])
 }
@@ -45,19 +45,16 @@ model Plan {
   shop             String
   name             String
   description      String?
-  amount           Int
+  discountPercent  Int          @default(10)  // renamed from amount, 1-99
   currency         String       @default("NGN")
-  interval         String       // "daily" | "weekly" | "monthly" | "biannually" | "annually"
+  interval         String
   paystackPlanCode String?      @unique
   paystackPlanId   String?      @unique
   isActive         Boolean      @default(true)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-
-  // link to product
-  productId        String?      @unique  // one-to-one
+  productId        String?
   product          Product?     @relation(fields: [productId], references: [id])
-
   subscribers      Subscriber[]
 }
 

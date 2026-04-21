@@ -1,40 +1,122 @@
 {{ 'subscription-widget.css' | asset_url | stylesheet_tag }}
 
+{%- assign current_variant = product.selected_or_first_available_variant -%}
+{%- assign current_price = current_variant.price -%}
+{%- assign compare_price = current_variant.compare_at_price | default: 0 -%}
+{%- assign save_pct = 0 -%}
+{%- if compare_price > current_price -%}
+  {%- assign save_pct = compare_price | minus: current_price | times: 100 | divided_by: compare_price -%}
+{%- endif -%}
+
 <div
   class="subscription-widget"
   data-shop="{{ shop.permanent_domain }}"
   data-app-url="{{ block.settings.app_url }}"
   data-product-id="{{ product.id }}"
-  data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+  data-variant-id="{{ current_variant.id }}"
 >
+
+  <!-- Loading -->
   <div class="subscription-widget__loading">
     <span>Loading options...</span>
   </div>
 
+  <!-- Options -->
   <div class="subscription-widget__options" style="display:none;">
-    <p class="subscription-widget__title">{{ block.settings.heading }}</p>
 
-    <div class="subscription-widget__row subscription-widget__row--subscribe">
+    <!-- Price header -->
+    <div class="sw-price-header">
+      <span class="sw-current-price">{{ current_price | money }}</span>
+      {%- if compare_price > current_price -%}
+        <span class="sw-compare-price">{{ compare_price | money }}</span>
+        <span class="sw-save-badge">SAVE {{ save_pct }}%</span>
+      {%- else -%}
+        <span class="sw-compare-price" style="display:none;"></span>
+        <span class="sw-save-badge" style="display:none;"></span>
+      {%- endif -%}
+    </div>
+
+    <!-- Variant selector -->
+    {%- if product.variants.size > 1 -%}
+    <div class="sw-variant-selector">
+      {%- for variant in product.variants -%}
+        {%- assign v_price = variant.price -%}
+        {%- assign v_compare = variant.compare_at_price | default: 0 -%}
+        {%- assign v_save_amount = 0 -%}
+        {%- if v_compare > v_price -%}
+          {%- assign v_save_amount = v_compare | minus: v_price -%}
+        {%- endif -%}
+        <button
+          class="sw-variant-btn{% if variant.id == current_variant.id %} active{% endif %}"
+          data-variant-id="{{ variant.id }}"
+          data-price="{{ v_price }}"
+          data-compare-price="{{ v_compare }}"
+          {%- if v_save_amount > 0 -%}
+          data-savings="{{ v_save_amount | money }}"
+          {%- endif -%}
+        >
+          <span class="sw-variant-title">{{ variant.title }}</span>
+          {%- if v_save_amount > 0 -%}
+            <span class="sw-variant-savings">SAVE {{ v_save_amount | money }}</span>
+          {%- endif -%}
+        </button>
+      {%- endfor -%}
+    </div>
+    {%- endif -%}
+
+    <!-- One-time row -->
+    <div class="subscription-widget__row subscription-widget__row--onetime">
       <div class="sw-radio"></div>
       <div class="sw-row-text">
-        <span class="sw-plan-name">Subscribe</span>
-        <span class="sw-des"></span>
+        <span class="sw-plan-name">ONE-TIME PURCHASE</span>
       </div>
     </div>
 
-    <div class="subscription-widget__row subscription-widget__row--onetime active">
+    <!-- Subscribe row -->
+    <div class="subscription-widget__row subscription-widget__row--subscribe active">
       <div class="sw-radio"></div>
       <div class="sw-row-text">
-        <span class="sw-plan-name">One-time purchase</span>
-        <span>{{product.price | money_with_currency}}</span>
+        <span class="sw-plan-name">
+          SUBSCRIBE &amp; SAVE <span class="sw-discount-label">10% OFF</span>
+        </span>
+        <ul class="sw-benefits">
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Recurring 10% Discount
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Swap Products Easily
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Easily Pause, Skip, or Change Frequency
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div style="">
-    <button class="subscription-widget__action-btn">Buy Now</button>
-    </div>
-  </div>
+    <!-- Plan list (rendered by JS when subscribe mode is active) -->
+    <div class="sw-plan-list" style="display:none;"></div>
 
+    <!-- CTA -->
+    <button class="subscription-widget__action-btn">SUBSCRIBE &amp; SAVE 🔒</button>
+
+    <!-- Trust badges -->
+    <div class="sw-trust-badges">
+      <div class="sw-badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>60 DAY<br>GUARANTEE</span>
+      </div>
+      <div class="sw-badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>SECURE<br>CHECKOUT</span>
+      </div>
+    </div>
+
+  </div><!-- /.subscription-widget__options -->
+
+  <!-- Form -->
   <div class="subscription-widget__form" style="display:none;">
     <div class="subscription-widget__selected-plan"></div>
     <h3 class="sw-form-heading">Complete your subscription</h3>
@@ -58,6 +140,7 @@
     </div>
     <div class="subscription-widget__error" style="display:none;"></div>
   </div>
+
 </div>
 
 <script src="https://js.paystack.co/v2/inline.js"></script>
@@ -84,7 +167,7 @@
       "type": "color",
       "id": "active_color",
       "label": "Active Row Color",
-      "default": "#008060"
+      "default": "#e8720c"
     }
   ]
 }
